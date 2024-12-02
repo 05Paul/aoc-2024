@@ -88,6 +88,8 @@ func getSolver(day uint8) (Solver, error) {
 	switch day {
 	case 1:
 		return &Day01{}, nil
+	case 2:
+		return &Day02{}, nil
 	default:
 		return nil, fmt.Errorf("Undefined day: %v", day)
 	}
