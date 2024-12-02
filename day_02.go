@@ -17,7 +17,7 @@ func (d *Day02) SolvePart1(content string) (fmt.Stringer, error) {
 
 	safeCount := 0
 	for _, report := range reports {
-		if d.isSafe(report) {
+		if d.isSafe(report, 0) {
 			safeCount += 1
 		}
 	}
@@ -26,7 +26,19 @@ func (d *Day02) SolvePart1(content string) (fmt.Stringer, error) {
 }
 
 func (d *Day02) SolvePart2(content string) (fmt.Stringer, error) {
-	return nil, fmt.Errorf("Not yet implemented")
+	reports, err := d.parse(content)
+	if err != nil {
+		return nil, err
+	}
+
+	safeCount := 0
+	for _, report := range reports {
+		if d.isSafe(report, 1) {
+			safeCount += 1
+		}
+	}
+
+	return Solve(safeCount), nil
 }
 
 func (d *Day02) parse(content string) ([][]int, error) {
@@ -48,40 +60,61 @@ func (d *Day02) parse(content string) ([][]int, error) {
 	return lines, nil
 }
 
-func (d *Day02) isSafe(report []int) bool {
-	if len(report) < 2 {
-		return true
+func (d *Day02) isSafe(report []int, dampenerCapacity int) bool {
+	for _, rep := range d.permutations(report, dampenerCapacity) {
+		differences := d.asDifferences(rep)
+		if d.valid(differences) {
+			return true
+		}
 	}
 
-	if len(report) < 3 {
-		return int(math.Abs(float64(report[0]-report[1]))) <= 3
-	}
-
-	diff := report[0] - report[1]
-
-	if diff == 0 {
-		return false
-	}
-
-	increasing := diff < 0
-
-	return d.isSafeInner(0, 1, increasing, report)
+	return false
 }
 
-func (d *Day02) isSafeInner(firstIndex int, secondIndex int, increasing bool, values []int) bool {
-	if secondIndex >= len(values) {
-		return true
+func (d *Day02) valid(report []int) bool {
+	inc := report[0] > 0
+	for _, diff := range report {
+		if diff == 0 {
+			return false
+		}
+		if int(math.Abs(float64(diff))) > 3 {
+			return false
+		}
+
+		if diff > 0 != inc {
+			return false
+		}
 	}
 
-	diff := values[firstIndex] - values[secondIndex]
+	return true
+}
 
-	if increasing && (diff >= 0 || diff < -3) {
-		return false
+func (d *Day02) asDifferences(report []int) []int {
+	differences := make([]int, len(report)-1)
+	for index, level := range report[:len(report)-1] {
+		differences[index] = report[index+1] - level
 	}
 
-	if !increasing && (diff <= 0 || diff > 3) {
-		return false
+	return differences
+}
+
+func (d *Day02) permutations(report []int, c int) [][]int {
+	perms := make([][]int, 0)
+	if c == 0 {
+		perms = append(perms, report)
+		return perms
 	}
 
-	return d.isSafeInner(firstIndex+1, secondIndex+1, increasing, values)
+	for index := range report {
+		n := d.remove(report, index)
+		perms = append(perms, n)
+	}
+
+	return perms
+}
+
+func (d *Day02) remove(report []int, index int) []int {
+	tmp := make([]int, len(report))
+	copy(tmp, report)
+	return append(tmp[:index], tmp[index+1:]...)
 }
