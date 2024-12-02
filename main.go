@@ -11,11 +11,15 @@ func main() {
 		d     uint64
 		path1 string
 		path2 string
+		part1 bool
+		part2 bool
 	)
 
 	flag.Uint64Var(&d, "day", 0, "Day to solve")
 	flag.StringVar(&path1, "f1", "", "Path to part 1")
 	flag.StringVar(&path2, "f2", "", "Path to part 2")
+	flag.BoolVar(&part1, "p1", false, "Whether to run part 1")
+	flag.BoolVar(&part2, "p2", false, "Whether to run part 2")
 	flag.Parse()
 
 	var day = uint8(d)
@@ -31,37 +35,51 @@ func main() {
 
 	fmt.Printf("Day %v:\n", day)
 
-	if path1 == "" {
-		path1 = fmt.Sprintf("inputs/day_%02d/part1.txt", day)
+	if !part1 && !part2 {
+		part1 = true
+		part2 = true
 	}
 
-	var input1 []byte
-	if input1, err = os.ReadFile(path1); err != nil {
-		fmt.Fprintf(os.Stderr, "Could not read input 1: %v\n", err)
+	if part1 {
+		part(day, solver, path1, one)
+	}
+
+	if part2 {
+		part(day, solver, path2, two)
+	}
+}
+
+type Part int
+
+const (
+	one Part = 1
+	two Part = 2
+)
+
+func part(day uint8, solver Solver, path string, part Part) {
+	if path == "" {
+		path = fmt.Sprintf("inputs/day_%02d/part%v.txt", day, part)
+	}
+
+	var input []byte
+	var err error
+	if input, err = os.ReadFile(path); err != nil {
+		fmt.Fprintf(os.Stderr, "Could not read input %v: %v\n", part, err)
 		os.Exit(1)
 	}
 
-	if solution, err := solver.SolvePart1(string(input1)); err != nil {
-		fmt.Fprintf(os.Stderr, "Could not solve part 1: %v\n", err)
+	if solution, err := solvePart(solver, string(input), part); err != nil {
+		fmt.Fprintf(os.Stderr, "Could not solve part %v: %v\n", part, err)
 	} else {
-		fmt.Printf(" * Part 1: %v\n", solution)
+		fmt.Printf(" * Part %v: %v\n", part, solution)
 	}
+}
 
-	if path2 == "" {
-		path2 = fmt.Sprintf("inputs/day_%02d/part2.txt", day)
-	}
-
-	var input2 []byte
-
-	if input2, err = os.ReadFile(path2); err != nil {
-		fmt.Fprintf(os.Stderr, "Could not read input 2: %v\n", err)
-		os.Exit(1)
-	}
-
-	if solution, err := solver.SolvePart2(string(input2)); err != nil {
-		fmt.Fprintf(os.Stderr, "Could not solve part 2: %v\n", err)
+func solvePart(solver Solver, puzzle string, part Part) (fmt.Stringer, error) {
+	if part == one {
+		return solver.SolvePart1(puzzle)
 	} else {
-		fmt.Printf(" * Part 2: %v\n", solution)
+		return solver.SolvePart2(puzzle)
 	}
 }
 
@@ -88,6 +106,8 @@ func getSolver(day uint8) (Solver, error) {
 	switch day {
 	case 1:
 		return &Day01{}, nil
+	case 2:
+		return &Day02{}, nil
 	default:
 		return nil, fmt.Errorf("Undefined day: %v", day)
 	}

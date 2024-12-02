@@ -10,14 +10,14 @@ import (
 
 type Day01 struct{}
 
-func (*Day01) SolvePart1(content string) (fmt.Stringer, error) {
+func (d *Day01) SolvePart1(content string) (fmt.Stringer, error) {
 	var (
 		list1 []int
 		list2 []int
 		err   error
 	)
 
-	if list1, list2, err = parse(content); err != nil {
+	if list1, list2, err = d.parse(content); err != nil {
 		return nil, err
 	}
 
@@ -33,18 +33,18 @@ func (*Day01) SolvePart1(content string) (fmt.Stringer, error) {
 	return Solve(totalDistance), nil
 }
 
-func (*Day01) SolvePart2(content string) (fmt.Stringer, error) {
+func (d *Day01) SolvePart2(content string) (fmt.Stringer, error) {
 	var (
 		list1 []int
 		list2 []int
 		err   error
 	)
 
-	if list1, list2, err = parse(content); err != nil {
+	if list1, list2, err = d.parse(content); err != nil {
 		return nil, err
 	}
 
-	var counts = numberCount(list2)
+	var counts = d.numberCount(list2)
 	var similiarity = 0
 
 	for _, value := range list1 {
@@ -54,7 +54,7 @@ func (*Day01) SolvePart2(content string) (fmt.Stringer, error) {
 	return Solve(similiarity), nil
 }
 
-func parse(content string) ([]int, []int, error) {
+func (d *Day01) parse(content string) ([]int, []int, error) {
 	var lines = strings.Split(content, "\n")
 	var (
 		list1 []int = make([]int, len(lines))
@@ -80,7 +80,7 @@ func parse(content string) ([]int, []int, error) {
 	return list1, list2, nil
 }
 
-func numberCount(numbers []int) map[int]int {
+func (d *Day01) numberCount(numbers []int) map[int]int {
 	var counts = make(map[int]int)
 
 	for _, value := range numbers {
