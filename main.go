@@ -58,13 +58,13 @@ const (
 
 func part(day uint8, solver Solver, path string, part Part) {
 	if path == "" {
-		path = fmt.Sprintf("inputs/day_%02d/part%v.txt", day, part)
+		path = fmt.Sprintf("inputs/day_%02d/input.txt", day)
 	}
 
 	var input []byte
 	var err error
 	if input, err = os.ReadFile(path); err != nil {
-		fmt.Fprintf(os.Stderr, "Could not read input %v: %v\n", part, err)
+		fmt.Fprintf(os.Stderr, "Could not read input for part %v: %v\n", part, err)
 		os.Exit(1)
 	}
 
@@ -108,6 +108,8 @@ func getSolver(day uint8) (Solver, error) {
 		return &Day01{}, nil
 	case 2:
 		return &Day02{}, nil
+	case 3:
+		return &Day03{}, nil
 	default:
 		return nil, fmt.Errorf("Undefined day: %v", day)
 	}
