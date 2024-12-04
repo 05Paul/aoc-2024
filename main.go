@@ -1,6 +1,11 @@
 package main
 
 import (
+	day01 "aoc/day_01"
+	day02 "aoc/day_02"
+	day03 "aoc/day_03"
+	day04 "aoc/day_04"
+	"aoc/solution"
 	"flag"
 	"fmt"
 	"os"
@@ -25,10 +30,10 @@ func main() {
 	var day = uint8(d)
 
 	var (
-		solver Solver
+		solver solution.Solver
 		err    error
 	)
-	if solver, err = getSolver(day); err != nil {
+	if solver = getSolver(day); solver == nil {
 		fmt.Fprintf(os.Stderr, "Could not get solver: %v\n", err)
 		os.Exit(1)
 	}
@@ -56,7 +61,7 @@ const (
 	two Part = 2
 )
 
-func part(day uint8, solver Solver, path string, part Part) {
+func part(day uint8, solver solution.Solver, path string, part Part) {
 	if path == "" {
 		path = fmt.Sprintf("inputs/day_%02d/input.txt", day)
 	}
@@ -75,7 +80,7 @@ func part(day uint8, solver Solver, path string, part Part) {
 	}
 }
 
-func solvePart(solver Solver, puzzle string, part Part) (fmt.Stringer, error) {
+func solvePart(solver solution.Solver, puzzle string, part Part) (fmt.Stringer, error) {
 	if part == one {
 		return solver.SolvePart1(puzzle)
 	} else {
@@ -83,34 +88,17 @@ func solvePart(solver Solver, puzzle string, part Part) (fmt.Stringer, error) {
 	}
 }
 
-type Solver interface {
-	SolvePart1(puzzle string) (fmt.Stringer, error)
-	SolvePart2(puzzle string) (fmt.Stringer, error)
-}
-
-type Solution[T any] struct {
-	value T
-}
-
-func Solve[T any](value T) *Solution[T] {
-	return &Solution[T]{
-		value: value,
-	}
-}
-
-func (s *Solution[any]) String() string {
-	return fmt.Sprintf("%v", s.value)
-}
-
-func getSolver(day uint8) (Solver, error) {
+func getSolver(day uint8) solution.Solver {
 	switch day {
 	case 1:
-		return &Day01{}, nil
+		return day01.New()
 	case 2:
-		return &Day02{}, nil
+		return day02.New()
 	case 3:
-		return &Day03{}, nil
+		return day03.New()
+	case 4:
+		return day04.New()
 	default:
-		return nil, fmt.Errorf("Undefined day: %v", day)
+		return nil
 	}
 }
