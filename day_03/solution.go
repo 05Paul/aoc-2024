@@ -1,13 +1,18 @@
-package main
+package day03
 
 import (
 	"aoc/parser"
+	"aoc/solution"
 	"fmt"
 )
 
-type Day03 struct{}
+func New() solution.Solver {
+	return &day{}
+}
 
-func (d *Day03) SolvePart1(content string) (fmt.Stringer, error) {
+type day struct{}
+
+func (d *day) SolvePart1(content string) (fmt.Stringer, error) {
 	parser := parser.New(func(captures []any) parser.Operation[int] {
 		op1, ok1 := captures[2].(*int)
 		op2, ok2 := captures[4].(*int)
@@ -35,10 +40,10 @@ func (d *Day03) SolvePart1(content string) (fmt.Stringer, error) {
 		}
 	}
 
-	return Solve(total), nil
+	return solution.Solve(total), nil
 }
 
-func (d *Day03) SolvePart2(content string) (fmt.Stringer, error) {
+func (d *day) SolvePart2(content string) (fmt.Stringer, error) {
 	parser := parser.New(func(captures []any) parser.Operation[int] {
 		op1, ok1 := captures[3].(*int)
 		op2, ok2 := captures[5].(*int)
@@ -67,5 +72,5 @@ func (d *Day03) SolvePart2(content string) (fmt.Stringer, error) {
 		}
 	}
 
-	return Solve(total), nil
+	return solution.Solve(total), nil
 }

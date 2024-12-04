@@ -1,6 +1,7 @@
-package main
+package day01
 
 import (
+	"aoc/solution"
 	"fmt"
 	"math"
 	"slices"
@@ -8,16 +9,20 @@ import (
 	"strings"
 )
 
-type Day01 struct{}
+func New() solution.Solver {
+	return &day{}
+}
 
-func (d *Day01) SolvePart1(content string) (fmt.Stringer, error) {
+type day struct{}
+
+func (d *day) SolvePart1(content string) (fmt.Stringer, error) {
 	var (
 		list1 []int
 		list2 []int
 		err   error
 	)
 
-	if list1, list2, err = d.parse(content); err != nil {
+	if list1, list2, err = parse(content); err != nil {
 		return nil, err
 	}
 
@@ -30,31 +35,31 @@ func (d *Day01) SolvePart1(content string) (fmt.Stringer, error) {
 		totalDistance += int(math.Abs(float64(list1[index] - list2[index])))
 	}
 
-	return Solve(totalDistance), nil
+	return solution.Solve(totalDistance), nil
 }
 
-func (d *Day01) SolvePart2(content string) (fmt.Stringer, error) {
+func (d *day) SolvePart2(content string) (fmt.Stringer, error) {
 	var (
 		list1 []int
 		list2 []int
 		err   error
 	)
 
-	if list1, list2, err = d.parse(content); err != nil {
+	if list1, list2, err = parse(content); err != nil {
 		return nil, err
 	}
 
-	var counts = d.numberCount(list2)
+	var counts = numberCount(list2)
 	var similiarity = 0
 
 	for _, value := range list1 {
 		similiarity += value * counts[value]
 	}
 
-	return Solve(similiarity), nil
+	return solution.Solve(similiarity), nil
 }
 
-func (d *Day01) parse(content string) ([]int, []int, error) {
+func parse(content string) ([]int, []int, error) {
 	var lines = strings.Split(content, "\n")
 	var (
 		list1 []int = make([]int, len(lines))
@@ -80,7 +85,7 @@ func (d *Day01) parse(content string) ([]int, []int, error) {
 	return list1, list2, nil
 }
 
-func (d *Day01) numberCount(numbers []int) map[int]int {
+func numberCount(numbers []int) map[int]int {
 	var counts = make(map[int]int)
 
 	for _, value := range numbers {

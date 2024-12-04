@@ -1,47 +1,52 @@
-package main
+package day02
 
 import (
+	"aoc/solution"
 	"fmt"
 	"math"
 	"strconv"
 	"strings"
 )
 
-type Day02 struct{}
+func New() solution.Solver {
+	return &day{}
+}
 
-func (d *Day02) SolvePart1(content string) (fmt.Stringer, error) {
-	reports, err := d.parse(content)
+type day struct{}
+
+func (d *day) SolvePart1(content string) (fmt.Stringer, error) {
+	reports, err := parse(content)
 	if err != nil {
 		return nil, err
 	}
 
 	safeCount := 0
 	for _, report := range reports {
-		if d.isSafe(report, 0) {
+		if isSafe(report, 0) {
 			safeCount += 1
 		}
 	}
 
-	return Solve(safeCount), nil
+	return solution.Solve(safeCount), nil
 }
 
-func (d *Day02) SolvePart2(content string) (fmt.Stringer, error) {
-	reports, err := d.parse(content)
+func (d *day) SolvePart2(content string) (fmt.Stringer, error) {
+	reports, err := parse(content)
 	if err != nil {
 		return nil, err
 	}
 
 	safeCount := 0
 	for _, report := range reports {
-		if d.isSafe(report, 1) {
+		if isSafe(report, 1) {
 			safeCount += 1
 		}
 	}
 
-	return Solve(safeCount), nil
+	return solution.Solve(safeCount), nil
 }
 
-func (d *Day02) parse(content string) ([][]int, error) {
+func parse(content string) ([][]int, error) {
 	reports := strings.Split(content, "\n")
 	var lines = make([][]int, 0, len(reports))
 	for _, report := range reports[:len(reports)-1] {
@@ -60,10 +65,10 @@ func (d *Day02) parse(content string) ([][]int, error) {
 	return lines, nil
 }
 
-func (d *Day02) isSafe(report []int, dampenerCapacity int) bool {
-	for _, rep := range d.permutations(report, dampenerCapacity) {
-		differences := d.asDifferences(rep)
-		if d.valid(differences) {
+func isSafe(report []int, dampenerCapacity int) bool {
+	for _, rep := range permutations(report, dampenerCapacity) {
+		differences := asDifferences(rep)
+		if valid(differences) {
 			return true
 		}
 	}
@@ -71,7 +76,7 @@ func (d *Day02) isSafe(report []int, dampenerCapacity int) bool {
 	return false
 }
 
-func (d *Day02) valid(report []int) bool {
+func valid(report []int) bool {
 	inc := report[0] > 0
 	for _, diff := range report {
 		if diff == 0 {
@@ -89,7 +94,7 @@ func (d *Day02) valid(report []int) bool {
 	return true
 }
 
-func (d *Day02) asDifferences(report []int) []int {
+func asDifferences(report []int) []int {
 	differences := make([]int, len(report)-1)
 	for index, level := range report[:len(report)-1] {
 		differences[index] = report[index+1] - level
@@ -98,7 +103,7 @@ func (d *Day02) asDifferences(report []int) []int {
 	return differences
 }
 
-func (d *Day02) permutations(report []int, c int) [][]int {
+func permutations(report []int, c int) [][]int {
 	perms := make([][]int, 0)
 	if c == 0 {
 		perms = append(perms, report)
@@ -106,14 +111,14 @@ func (d *Day02) permutations(report []int, c int) [][]int {
 	}
 
 	for index := range report {
-		n := d.remove(report, index)
+		n := remove(report, index)
 		perms = append(perms, n)
 	}
 
 	return perms
 }
 
-func (d *Day02) remove(report []int, index int) []int {
+func remove(report []int, index int) []int {
 	tmp := make([]int, len(report))
 	copy(tmp, report)
 	return append(tmp[:index], tmp[index+1:]...)
