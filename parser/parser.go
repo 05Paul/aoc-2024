@@ -14,13 +14,26 @@ func New[In any, Out any](combinator func(captures []In) Operation[Out], capture
 }
 
 func Multiply(operands ...int) Operation[int] {
-	return &Multiplication{
+	return &multiplication[int]{
 		operands: operands,
+		onEmpty:  nil,
+		fold: func(accumulator int, operand int) int {
+			return accumulator * operand
+		},
+	}
+}
+
+func NotEmpty(operands ...any) Operation[bool] {
+	return &validate[any]{
+		values: operands,
+		check: func(values []any) bool {
+			return len(values) > 0
+		},
 	}
 }
 
 func CaptureString(value string) SubCapture {
-	return &StringCapture{
+	return &stringCapture{
 		value:        value,
 		runes:        []rune(value),
 		currentIndex: 0,
@@ -28,13 +41,13 @@ func CaptureString(value string) SubCapture {
 }
 
 func CaptureBetween(from string, to string) SubCapture {
-	return &BetweenCapture{
-		from: &StringCapture{
+	return &betweenCapture{
+		from: &stringCapture{
 			value:        from,
 			runes:        []rune(from),
 			currentIndex: 0,
 		},
-		to: &StringCapture{
+		to: &stringCapture{
 			value:        to,
 			runes:        []rune(to),
 			currentIndex: 0,
@@ -44,7 +57,7 @@ func CaptureBetween(from string, to string) SubCapture {
 }
 
 func CaptureInt(minDigits int, maxDigits int) SubCapture {
-	return &IntCapture{
+	return &intCapture{
 		minDigits:  minDigits,
 		maxDigits:  maxDigits,
 		digitCount: 0,
@@ -118,13 +131,13 @@ func (s *Parser[In, Out]) Reset() {
 	}
 }
 
-type StringCapture struct {
+type stringCapture struct {
 	value        string
 	runes        []rune
 	currentIndex int
 }
 
-func (s *StringCapture) SubParse(character rune) (content any, complete bool, reset bool, captured bool) {
+func (s *stringCapture) SubParse(character rune) (content any, complete bool, reset bool, captured bool) {
 	if s.currentIndex < len(s.runes) && s.runes[s.currentIndex] == character {
 		s.currentIndex += 1
 	} else {
@@ -136,17 +149,17 @@ func (s *StringCapture) SubParse(character rune) (content any, complete bool, re
 	return s.value, complete, false, true
 }
 
-func (s *StringCapture) Reset() {
+func (s *stringCapture) Reset() {
 	s.currentIndex = 0
 }
 
-type BetweenCapture struct {
-	from     *StringCapture
-	to       *StringCapture
+type betweenCapture struct {
+	from     *stringCapture
+	to       *stringCapture
 	fromDone bool
 }
 
-func (b *BetweenCapture) SubParse(character rune) (content any, complete bool, reset bool, captured bool) {
+func (b *betweenCapture) SubParse(character rune) (content any, complete bool, reset bool, captured bool) {
 	if b.fromDone {
 		complete, reset = b.capture(character, b.to)
 		if reset {
@@ -171,25 +184,25 @@ func (b *BetweenCapture) SubParse(character rune) (content any, complete bool, r
 	return nil, false, false, true
 }
 
-func (b *BetweenCapture) capture(character rune, capture *StringCapture) (complete bool, reset bool) {
+func (b *betweenCapture) capture(character rune, capture *stringCapture) (complete bool, reset bool) {
 	_, complete, reset, _ = capture.SubParse(character)
 	return complete, reset
 }
 
-func (b *BetweenCapture) Reset() {
+func (b *betweenCapture) Reset() {
 	b.from.Reset()
 	b.to.Reset()
 	b.fromDone = false
 }
 
-type IntCapture struct {
+type intCapture struct {
 	minDigits  int
 	maxDigits  int
 	digitCount int
 	value      int
 }
 
-func (i *IntCapture) SubParse(character rune) (content any, complete bool, reset bool, captured bool) {
+func (i *intCapture) SubParse(character rune) (content any, complete bool, reset bool, captured bool) {
 	value, err := strconv.Atoi(string(character))
 	if err != nil {
 		if i.digitCount >= i.minDigits && i.digitCount <= i.maxDigits {
@@ -209,24 +222,36 @@ func (i *IntCapture) SubParse(character rune) (content any, complete bool, reset
 	return nil, false, false, true
 }
 
-func (i *IntCapture) Reset() {
+func (i *intCapture) Reset() {
 	i.value = 0
 	i.digitCount = 0
 }
 
-type Multiplication struct {
-	operands []int
+type multiplication[T any] struct {
+	operands []T
+	onEmpty  *T
+	fold     func(accumulator T, operand T) T
 }
 
-func (m *Multiplication) Apply() *int {
+func (m *multiplication[T]) Apply() *T {
 	if len(m.operands) < 0 {
-		return nil
+		return m.onEmpty
 	}
 
-	product := m.operands[0]
+	accumulator := m.operands[0]
 	for _, operand := range m.operands[1:] {
-		product *= operand
+		accumulator = m.fold(accumulator, operand)
 	}
 
-	return &product
+	return &accumulator
+}
+
+type validate[T any] struct {
+	values []T
+	check  func(values []T) bool
+}
+
+func (v *validate[T]) Apply() *bool {
+	valid := v.check(v.values)
+	return &valid
 }

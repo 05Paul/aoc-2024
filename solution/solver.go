@@ -11,7 +11,7 @@ type Solution[T any] struct {
 	value T
 }
 
-func Solve[T any](value T) *Solution[T] {
+func New[T any](value T) *Solution[T] {
 	return &Solution[T]{
 		value: value,
 	}

@@ -4,6 +4,7 @@ import (
 	day01 "aoc/day_01"
 	day02 "aoc/day_02"
 	day03 "aoc/day_03"
+	day04 "aoc/day_04"
 	"aoc/solution"
 	"flag"
 	"fmt"
@@ -32,7 +33,7 @@ func main() {
 		solver solution.Solver
 		err    error
 	)
-	if solver, err = getSolver(day); err != nil {
+	if solver = getSolver(day); solver == nil {
 		fmt.Fprintf(os.Stderr, "Could not get solver: %v\n", err)
 		os.Exit(1)
 	}
@@ -87,15 +88,17 @@ func solvePart(solver solution.Solver, puzzle string, part Part) (fmt.Stringer, 
 	}
 }
 
-func getSolver(day uint8) (solution.Solver, error) {
+func getSolver(day uint8) solution.Solver {
 	switch day {
 	case 1:
-		return day01.New(), nil
+		return day01.New()
 	case 2:
-		return day02.New(), nil
+		return day02.New()
 	case 3:
-		return day03.New(), nil
+		return day03.New()
+	case 4:
+		return day04.New()
 	default:
-		return nil, fmt.Errorf("Undefined day: %v", day)
+		return nil
 	}
 }

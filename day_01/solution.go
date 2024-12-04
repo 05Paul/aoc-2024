@@ -35,7 +35,7 @@ func (d *day) SolvePart1(content string) (fmt.Stringer, error) {
 		totalDistance += int(math.Abs(float64(list1[index] - list2[index])))
 	}
 
-	return solution.Solve(totalDistance), nil
+	return solution.New(totalDistance), nil
 }
 
 func (d *day) SolvePart2(content string) (fmt.Stringer, error) {
@@ -56,7 +56,7 @@ func (d *day) SolvePart2(content string) (fmt.Stringer, error) {
 		similiarity += value * counts[value]
 	}
 
-	return solution.Solve(similiarity), nil
+	return solution.New(similiarity), nil
 }
 
 func parse(content string) ([]int, []int, error) {

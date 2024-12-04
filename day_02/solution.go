@@ -27,7 +27,7 @@ func (d *day) SolvePart1(content string) (fmt.Stringer, error) {
 		}
 	}
 
-	return solution.Solve(safeCount), nil
+	return solution.New(safeCount), nil
 }
 
 func (d *day) SolvePart2(content string) (fmt.Stringer, error) {
@@ -43,7 +43,7 @@ func (d *day) SolvePart2(content string) (fmt.Stringer, error) {
 		}
 	}
 
-	return solution.Solve(safeCount), nil
+	return solution.New(safeCount), nil
 }
 
 func parse(content string) ([][]int, error) {

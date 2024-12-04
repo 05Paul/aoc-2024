@@ -33,7 +33,7 @@ func (d *day) SolvePart1(content string) (fmt.Stringer, error) {
 		}
 	}
 
-	return solution.Solve(total), nil
+	return solution.New(total), nil
 }
 
 func (d *day) SolvePart2(content string) (fmt.Stringer, error) {
@@ -58,5 +58,5 @@ func (d *day) SolvePart2(content string) (fmt.Stringer, error) {
 		}
 	}
 
-	return solution.Solve(total), nil
+	return solution.New(total), nil
 }
