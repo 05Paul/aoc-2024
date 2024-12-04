@@ -19,7 +19,9 @@ func (d *day) SolvePart1(content string) (fmt.Stringer, error) {
 }
 
 func (d *day) SolvePart2(content string) (fmt.Stringer, error) {
-	return nil, fmt.Errorf("Not yet implemented")
+	grid := parse(content)
+	count := searchMas(grid)
+	return solution.New(count), nil
 }
 
 func parse(content string) [][]rune {
@@ -66,22 +68,26 @@ func dfs(word []rune, grid [][]rune, x int, y int) int {
 func dfsDirection(word []rune, grid [][]rune, x int, y int, direction int) int {
 	xDir, yDir := directionPair(direction)
 	for offset, character := range word {
-		newX := x + offset*xDir
-		newY := y + offset*yDir
-		if newY < 0 || newY >= len(grid) {
-			return 0
-		}
-
-		if newX < 0 || newX >= len(grid[0]) {
-			return 0
-		}
-
-		if character != grid[newY][newX] {
+		if current := getOffset(grid, x, y, offset*xDir, offset*yDir); current == nil || character != *current {
 			return 0
 		}
 	}
 
 	return 1
+}
+
+func getOffset(grid [][]rune, x int, y int, xOff int, yOff int) *rune {
+	newX := x + xOff
+	newY := y + yOff
+	if !inbounds(grid, newY) || !inbounds(grid[0], newX) {
+		return nil
+	}
+
+	return &grid[newY][newX]
+}
+
+func inbounds[T any](axis []T, index int) bool {
+	return index >= 0 && index < len(axis)
 }
 
 func directionPair(direction int) (xDir int, yDir int) {
@@ -105,4 +111,38 @@ func directionPair(direction int) (xDir int, yDir int) {
 	default:
 		return 0, 0
 	}
+}
+
+func searchMas(grid [][]rune) int {
+	count := 0
+	for y, row := range grid {
+		for x, character := range row {
+			if character == 'A' {
+				count += isXMas(grid, x, y)
+			}
+		}
+	}
+
+	return count
+}
+
+func isXMas(grid [][]rune, x int, y int) int {
+	topLeft := getOffset(grid, x, y, -1, 1)
+	topRight := getOffset(grid, x, y, 1, 1)
+	bottomLeft := getOffset(grid, x, y, -1, -1)
+	bottomRight := getOffset(grid, x, y, 1, -1)
+
+	if topLeft == nil || topRight == nil || bottomLeft == nil || bottomRight == nil {
+		return 0
+	}
+
+	if masAxis(*topLeft, *bottomRight) && masAxis(*topRight, *bottomLeft) {
+		return 1
+	} else {
+		return 0
+	}
+}
+
+func masAxis(a rune, b rune) bool {
+	return (a == 'M' && b == 'S') || (a == 'S' && b == 'M')
 }
