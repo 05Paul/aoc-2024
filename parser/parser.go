@@ -4,11 +4,11 @@ import (
 	"strconv"
 )
 
-func New(combinator func(captures []any) Operation[int], captures ...SubCapture[any]) Capture[int] {
-	return &Parser[int]{
+func New[In any, Out any](combinator func(captures []In) Operation[Out], captures ...SubCapture) Capture[Out] {
+	return &Parser[In, Out]{
 		sub:          captures,
 		currentIndex: 0,
-		outputs:      make([]any, 0),
+		outputs:      make([]In, 0),
 		combinator:   combinator,
 	}
 }
@@ -19,7 +19,7 @@ func Multiply(operands ...int) Operation[int] {
 	}
 }
 
-func CaptureString(value string) SubCapture[any] {
+func CaptureString(value string) SubCapture {
 	return &StringCapture{
 		value:        value,
 		runes:        []rune(value),
@@ -27,7 +27,7 @@ func CaptureString(value string) SubCapture[any] {
 	}
 }
 
-func CaptureBetween(from string, to string) SubCapture[any] {
+func CaptureBetween(from string, to string) SubCapture {
 	return &BetweenCapture{
 		from: &StringCapture{
 			value:        from,
@@ -43,7 +43,7 @@ func CaptureBetween(from string, to string) SubCapture[any] {
 	}
 }
 
-func CaptureInt(minDigits int, maxDigits int) SubCapture[any] {
+func CaptureInt(minDigits int, maxDigits int) SubCapture {
 	return &IntCapture{
 		minDigits:  minDigits,
 		maxDigits:  maxDigits,
@@ -57,8 +57,8 @@ type Capture[N any] interface {
 	Reset()
 }
 
-type SubCapture[T any] interface {
-	SubParse(character rune) (content T, complete bool, reset bool, captured bool)
+type SubCapture interface {
+	SubParse(character rune) (content any, complete bool, reset bool, captured bool)
 	Reset()
 }
 
@@ -66,15 +66,15 @@ type Operation[T any] interface {
 	Apply() *T
 }
 
-type Parser[N any] struct {
-	sub          []SubCapture[any]
+type Parser[In any, Out any] struct {
+	sub          []SubCapture
 	currentIndex int
-	outputs      []any
-	combinator   func(captures []any) Operation[N]
+	outputs      []In
+	combinator   func(captures []In) Operation[Out]
 }
 
-func (s *Parser[N]) Parse(character rune) (content Operation[N], complete bool) {
-	c, complete, reset, captured := s.sub[s.currentIndex].SubParse(character)
+func (s *Parser[In, Out]) Parse(character rune) (content Operation[Out], complete bool) {
+	subOut, complete, reset, captured := s.sub[s.currentIndex].SubParse(character)
 
 	if reset {
 		s.Reset()
@@ -90,7 +90,10 @@ func (s *Parser[N]) Parse(character rune) (content Operation[N], complete bool) 
 		return nil, false
 	}
 
-	s.outputs = append(s.outputs, c)
+	if subOutValue, ok := subOut.(In); ok {
+		s.outputs = append(s.outputs, subOutValue)
+	}
+
 	s.currentIndex += 1
 
 	if s.currentIndex != len(s.sub) {
@@ -107,9 +110,9 @@ func (s *Parser[N]) Parse(character rune) (content Operation[N], complete bool) 
 	return out, true
 }
 
-func (s *Parser[N]) Reset() {
+func (s *Parser[In, Out]) Reset() {
 	s.currentIndex = 0
-	s.outputs = make([]any, 0)
+	s.outputs = make([]In, 0)
 	for _, su := range s.sub {
 		su.Reset()
 	}
@@ -130,7 +133,7 @@ func (s *StringCapture) SubParse(character rune) (content any, complete bool, re
 
 	complete = s.currentIndex == len(s.runes)
 
-	return &s.value, complete, false, true
+	return s.value, complete, false, true
 }
 
 func (s *StringCapture) Reset() {
@@ -190,7 +193,7 @@ func (i *IntCapture) SubParse(character rune) (content any, complete bool, reset
 	value, err := strconv.Atoi(string(character))
 	if err != nil {
 		if i.digitCount >= i.minDigits && i.digitCount <= i.maxDigits {
-			return &i.value, true, false, false
+			return i.value, true, false, false
 		}
 		return nil, false, true, false
 	}
@@ -216,6 +219,10 @@ type Multiplication struct {
 }
 
 func (m *Multiplication) Apply() *int {
+	if len(m.operands) < 0 {
+		return nil
+	}
+
 	product := m.operands[0]
 	for _, operand := range m.operands[1:] {
 		product *= operand
