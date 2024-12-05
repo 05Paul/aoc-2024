@@ -5,6 +5,7 @@ import (
 	day02 "aoc/day_02"
 	day03 "aoc/day_03"
 	day04 "aoc/day_04"
+	day05 "aoc/day_05"
 	"aoc/solution"
 	"flag"
 	"fmt"
@@ -31,10 +32,9 @@ func main() {
 
 	var (
 		solver solution.Solver
-		err    error
 	)
 	if solver = getSolver(day); solver == nil {
-		fmt.Fprintf(os.Stderr, "Could not get solver: %v\n", err)
+		fmt.Fprintf(os.Stderr, "Could not get solver: Day %v\n", day)
 		os.Exit(1)
 	}
 
@@ -98,6 +98,8 @@ func getSolver(day uint8) solution.Solver {
 		return day03.New()
 	case 4:
 		return day04.New()
+	case 5:
+		return day05.New()
 	default:
 		return nil
 	}
