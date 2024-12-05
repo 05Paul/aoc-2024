@@ -4,21 +4,38 @@ import (
 	"strconv"
 )
 
-func New[In any, Out any](combinator func(captures []In) Operation[Out], captures ...SubCapture) Capture[Out] {
-	return &Parser[In, Out]{
-		sub:          captures,
+func Sequential[In any, Out any](combinator func(captures []In) Operation[Out], captures ...SubCapture) Capture[Out] {
+	return &sequentialParser[In, Out]{
+		subs:         captures,
 		currentIndex: 0,
 		outputs:      make([]In, 0),
 		combinator:   combinator,
 	}
 }
 
+func Parallel[In any, Out any](combinator func(captures In, completedIndex int) Operation[Out], captures ...SubCapture) Capture[Out] {
+	return &parallelParser[In, Out]{
+		subs:       captures,
+		combinator: combinator,
+	}
+}
+
 func Multiply(operands ...int) Operation[int] {
-	return &multiplication[int]{
+	return &fold[int]{
 		operands: operands,
 		onEmpty:  nil,
 		fold: func(accumulator int, operand int) int {
 			return accumulator * operand
+		},
+	}
+}
+
+func NoOp[T any](operand T) Operation[T] {
+	return &fold[T]{
+		operands: []T{operand},
+		onEmpty:  nil,
+		fold: func(accumulator T, operand T) T {
+			return accumulator
 		},
 	}
 }
@@ -29,6 +46,22 @@ func NotEmpty(operands ...any) Operation[bool] {
 		check: func(values []any) bool {
 			return len(values) > 0
 		},
+	}
+}
+
+func CaptureSequential[In any, Out any](combinator func(captures []In) Operation[Out], captures ...SubCapture) SubCapture {
+	return &sequentialParser[In, Out]{
+		subs:         captures,
+		currentIndex: 0,
+		outputs:      make([]In, 0),
+		combinator:   combinator,
+	}
+}
+
+func CaptureParallel[In any, Out any](combinator func(captures In, completedIndex int) Operation[Out], captures ...SubCapture) Capture[Out] {
+	return &parallelParser[In, Out]{
+		subs:       captures,
+		combinator: combinator,
 	}
 }
 
@@ -79,15 +112,15 @@ type Operation[T any] interface {
 	Apply() *T
 }
 
-type Parser[In any, Out any] struct {
-	sub          []SubCapture
+type sequentialParser[In any, Out any] struct {
+	subs         []SubCapture
 	currentIndex int
 	outputs      []In
 	combinator   func(captures []In) Operation[Out]
 }
 
-func (s *Parser[In, Out]) Parse(character rune) (content Operation[Out], complete bool) {
-	subOut, complete, reset, captured := s.sub[s.currentIndex].SubParse(character)
+func (s *sequentialParser[In, Out]) Parse(character rune) (content Operation[Out], complete bool) {
+	subOut, complete, reset, captured := s.subs[s.currentIndex].SubParse(character)
 
 	if reset {
 		s.Reset()
@@ -109,8 +142,8 @@ func (s *Parser[In, Out]) Parse(character rune) (content Operation[Out], complet
 
 	s.currentIndex += 1
 
-	if s.currentIndex != len(s.sub) {
-		s.sub[s.currentIndex].Reset()
+	if s.currentIndex != len(s.subs) {
+		s.subs[s.currentIndex].Reset()
 		if !captured {
 			return s.Parse(character)
 		}
@@ -123,11 +156,52 @@ func (s *Parser[In, Out]) Parse(character rune) (content Operation[Out], complet
 	return out, true
 }
 
-func (s *Parser[In, Out]) Reset() {
+func (s *sequentialParser[In, Out]) SubParse(character rune) (content any, complete bool, reset bool, captured bool) {
+	content, complete = s.Parse(character)
+	return content, complete, false, true
+}
+
+func (s *sequentialParser[In, Out]) Reset() {
 	s.currentIndex = 0
 	s.outputs = make([]In, 0)
-	for _, su := range s.sub {
-		su.Reset()
+	for _, sub := range s.subs {
+		sub.Reset()
+	}
+}
+
+type parallelParser[In any, Out any] struct {
+	subs       []SubCapture
+	combinator func(captures In, completedIndex int) Operation[Out]
+}
+
+func (p *parallelParser[In, Out]) Parse(character rune) (content Operation[Out], complete bool) {
+	for index, sub := range p.subs {
+		subOut, complete, reset, _ := sub.SubParse(character)
+		if reset {
+			sub.Reset()
+		}
+
+		if !complete {
+			continue
+		}
+
+		if subOutValue, ok := subOut.(In); ok {
+			sub.Reset()
+			return p.combinator(subOutValue, index), true
+		}
+	}
+
+	return nil, false
+}
+
+func (p *parallelParser[In, Out]) SubParse(character rune) (content any, complete bool, reset bool, captured bool) {
+	content, complete = p.Parse(character)
+	return content, complete, false, true
+}
+
+func (p *parallelParser[In, Out]) Reset() {
+	for _, sub := range p.subs {
+		sub.Reset()
 	}
 }
 
@@ -227,13 +301,13 @@ func (i *intCapture) Reset() {
 	i.digitCount = 0
 }
 
-type multiplication[T any] struct {
+type fold[T any] struct {
 	operands []T
 	onEmpty  *T
 	fold     func(accumulator T, operand T) T
 }
 
-func (m *multiplication[T]) Apply() *T {
+func (m *fold[T]) Apply() *T {
 	if len(m.operands) < 0 {
 		return m.onEmpty
 	}

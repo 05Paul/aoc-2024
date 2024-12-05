@@ -13,7 +13,7 @@ func New() solution.Solver {
 type day struct{}
 
 func (d *day) SolvePart1(content string) (fmt.Stringer, error) {
-	parser := parser.New(func(captures []int) parser.Operation[int] {
+	parser := parser.Sequential(func(captures []int) parser.Operation[int] {
 		return parser.Multiply(captures...)
 	},
 		parser.CaptureString("mul"),
@@ -37,7 +37,7 @@ func (d *day) SolvePart1(content string) (fmt.Stringer, error) {
 }
 
 func (d *day) SolvePart2(content string) (fmt.Stringer, error) {
-	parser := parser.New(func(captures []int) parser.Operation[int] {
+	parser := parser.Sequential(func(captures []int) parser.Operation[int] {
 		return parser.Multiply(captures...)
 	},
 		parser.CaptureBetween("don't()", "do()"),
