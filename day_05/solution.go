@@ -3,6 +3,7 @@ package day05
 import (
 	"aoc/solution"
 	"fmt"
+	"slices"
 	"strconv"
 	"strings"
 )
@@ -28,7 +29,45 @@ func (d *day) SolvePart1(content string) (fmt.Stringer, error) {
 }
 
 func (d *day) SolvePart2(content string) (fmt.Stringer, error) {
-	return nil, fmt.Errorf("Not yet implemented")
+	sum := 0
+	constraints, orderings := parse(content)
+
+	for _, ordering := range orderings {
+		valid := correctOrder(ordering, constraints)
+		if valid {
+			continue
+		}
+		newOrder := ordered(ordering, constraints)
+		sum += newOrder[len(newOrder)/2]
+	}
+
+	return solution.New(sum), nil
+
+}
+
+func ordered(ordering []int, constraints map[int][]int) []int {
+	newOrder := make([]int, 0)
+Outer:
+	for _, item := range ordering {
+		currentContraints, ok := constraints[item]
+		if !ok {
+			newOrder = append(newOrder, item)
+			continue
+		}
+
+		for index, placed := range newOrder {
+			for _, constraint := range currentContraints {
+				if placed == constraint {
+					newOrder = slices.Insert(newOrder, index, item)
+					continue Outer
+				}
+			}
+		}
+
+		newOrder = append(newOrder, item)
+	}
+
+	return newOrder
 }
 
 func correctOrder(ordering []int, constraints map[int][]int) bool {
