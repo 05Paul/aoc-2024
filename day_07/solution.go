@@ -16,9 +16,22 @@ type day struct{}
 
 func (d *day) SolvePart1(content string) (fmt.Stringer, error) {
 	equations := parse(content)
+	total := solve(equations, []operation{ADD, MUL})
+
+	return solution.New(total), nil
+}
+
+func (d *day) SolvePart2(content string) (fmt.Stringer, error) {
+	equations := parse(content)
+	total := solve(equations, []operation{ADD, MUL, CMB})
+
+	return solution.New(total), nil
+}
+
+func solve(equations []equation, operations []operation) int {
 	total := 0
 	for _, equation := range equations {
-		combinations := permutate([]operation{ADD, MUL}, len(equation.parts)-1)
+		combinations := permutate(operations, len(equation.parts)-1)
 		combination, last := combinations.next()
 		for !last {
 			if equation.solves(combination) {
@@ -29,11 +42,7 @@ func (d *day) SolvePart1(content string) (fmt.Stringer, error) {
 		}
 	}
 
-	return solution.New(total), nil
-}
-
-func (d *day) SolvePart2(content string) (fmt.Stringer, error) {
-	return nil, fmt.Errorf("Not yet implemented")
+	return total
 }
 
 func parse(content string) []equation {
@@ -55,6 +64,7 @@ type operation = int
 const (
 	ADD operation = 0
 	MUL operation = 1
+	CMB operation = 2
 )
 
 type equation struct {
@@ -70,6 +80,10 @@ func (e *equation) solves(operations []operation) bool {
 			total += number
 		case MUL:
 			total *= number
+		case CMB:
+			length := len(strconv.Itoa(number))
+			total *= int(math.Pow10(length))
+			total += number
 		default:
 			continue
 		}
