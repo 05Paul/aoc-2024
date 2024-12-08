@@ -17,7 +17,7 @@ func (d *day) SolvePart1(content string) (fmt.Stringer, error) {
 	iterator := iter(positions)
 	antinodes := make(map[position]bool)
 	for combination := range combinations(iterator) {
-		for _, antinode := range combination.antinodes() {
+		for _, antinode := range combination.antinodes(1) {
 			if grid.inbounds(antinode) {
 				antinodes[antinode] = true
 			}
@@ -28,7 +28,18 @@ func (d *day) SolvePart1(content string) (fmt.Stringer, error) {
 }
 
 func (d *day) SolvePart2(content string) (fmt.Stringer, error) {
-	return nil, fmt.Errorf("Not yet implemented")
+	positions, grid := parse(content)
+	iterator := iter(positions)
+	antinodes := make(map[position]bool)
+	for combination := range combinations(iterator) {
+		for _, antinode := range combination.allAntinodes(grid) {
+			if grid.inbounds(antinode) {
+				antinodes[antinode] = true
+			}
+		}
+	}
+
+	return solution.New(len(antinodes)), nil
 }
 
 func parse(content string) (map[rune][]position, grid) {
@@ -113,58 +124,29 @@ type combination struct {
 	second position
 }
 
-type alignment = int
-
-const (
-	horizontal      alignment = 0
-	vertical        alignment = 1
-	diagonalIncline alignment = 2
-	diagonalDecline alignment = 3
-)
-
-func (c *combination) inline() (bool, alignment) {
-	if c.first.y == c.second.y {
-		return true, horizontal
-	}
-
-	if c.first.x == c.second.x {
-		return true, vertical
-	}
-
-	xDiff := c.xDiff()
-	yDiff := c.yDiff()
-	inline := yDiff%xDiff == 0
-	slope := yDiff / xDiff
-
-	if inline && slope < 0 {
-		if c.first.x > c.second.x {
-			return true, diagonalIncline
+func (c *combination) allAntinodes(grid grid) []position {
+	positions := make([]position, 0)
+	multiplier := 0
+	for {
+		currentPositions := c.antinodes(multiplier)
+		if !grid.inbounds(currentPositions[0]) && !grid.inbounds(currentPositions[1]) {
+			return positions
 		}
-
-		return true, diagonalDecline
+		multiplier += 1
+		positions = append(positions, currentPositions...)
 	}
-
-	if inline && slope > 0 {
-		if c.first.x > c.second.x {
-			return true, diagonalDecline
-		}
-
-		return true, diagonalIncline
-	}
-
-	return false, -1
 }
 
-func (c *combination) antinodes() []position {
+func (c *combination) antinodes(multiplier int) []position {
 	xDist, yDist := c.distance()
 	return []position{
 		{
-			x: c.first.x - xDist,
-			y: c.first.y - yDist,
+			x: c.first.x - xDist*multiplier,
+			y: c.first.y - yDist*multiplier,
 		},
 		{
-			x: c.second.x + xDist,
-			y: c.second.y + yDist,
+			x: c.second.x + xDist*multiplier,
+			y: c.second.y + yDist*multiplier,
 		},
 	}
 }
