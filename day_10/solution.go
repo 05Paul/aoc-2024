@@ -15,13 +15,20 @@ type day struct{}
 
 func (d *day) SolvePart1(content string) (fmt.Stringer, error) {
 	trialMap := parse(content)
-	trails := trialMap.trails()
+	trails, _ := trialMap.trails()
 
 	return solution.New(len(trails)), nil
 }
 
 func (d *day) SolvePart2(content string) (fmt.Stringer, error) {
-	return nil, fmt.Errorf("Not yet implemented")
+	trialMap := parse(content)
+	_, ratings := trialMap.trails()
+	sum := 0
+	for _, rating := range ratings {
+		sum += rating
+	}
+
+	return solution.New(sum), nil
 }
 
 func parse(content string) trialMap {
@@ -34,7 +41,7 @@ func parse(content string) trialMap {
 		for x, character := range line {
 			height, err := strconv.Atoi(string(character))
 			if err != nil {
-				continue
+				height = -1
 			}
 			row = append(row, position{
 				x:      x,
@@ -54,24 +61,29 @@ type trialMap struct {
 	positions [][]position
 }
 
-func (t *trialMap) trails() [][]position {
+func (t *trialMap) trails() ([][]position, []int) {
 	trails := make([][]position, 0)
+	ratings := make([]int, 0)
 	for pos := range t.iter() {
 		if pos.height == 0 {
-			trails = append(trails, t.trailsFrom(pos)...)
+			tr, trr := t.trailsFrom(pos)
+			trails = append(trails, tr...)
+			ratings = append(ratings, trr...)
 		}
 	}
 
-	return trails
+	return trails, ratings
 }
 
-func (t *trialMap) trailsFrom(pos position) [][]position {
-	rating := make(map[position]int)
+func (t *trialMap) trailsFrom(pos position) ([][]position, []int) {
+	ratings := make(map[position]int)
+	ratings[pos] = 1
 	trails := make(map[position][]position)
 	trails[pos] = []position{pos}
 
 	for range 9 {
 		newTrails := make(map[position][]position)
+		newRatings := make(map[position]int)
 		for pos, trail := range trails {
 			for neighbor := range t.neighbors(pos) {
 				if neighbor.height != pos.height+1 {
@@ -83,17 +95,23 @@ func (t *trialMap) trailsFrom(pos position) [][]position {
 
 				tmp[len(trail)] = neighbor
 				newTrails[neighbor] = tmp
+
+				newRatings[neighbor] += ratings[pos]
+
 			}
 		}
 		trails = newTrails
+		ratings = newRatings
 	}
 
 	tr := make([][]position, 0, len(trails))
-	for _, trail := range trails {
+	trr := make([]int, 0, len(trails))
+	for key, trail := range trails {
 		tr = append(tr, trail)
+		trr = append(trr, ratings[key])
 	}
 
-	return tr
+	return tr, trr
 }
 
 func (t *trialMap) neighbors(from position) func(func(position) bool) {
@@ -166,9 +184,4 @@ type position struct {
 	x      int
 	y      int
 	height int
-}
-
-type trailRoute struct {
-	start position
-	end   position
 }
