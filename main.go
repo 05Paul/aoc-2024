@@ -10,6 +10,7 @@ import (
 	day07 "aoc/day_07"
 	day08 "aoc/day_08"
 	day09 "aoc/day_09"
+	day10 "aoc/day_10"
 	"aoc/solution"
 	"flag"
 	"fmt"
@@ -112,6 +113,8 @@ func getSolver(day uint8) solution.Solver {
 		return day08.New()
 	case 9:
 		return day09.New()
+	case 10:
+		return day10.New()
 	default:
 		return nil
 	}
