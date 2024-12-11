@@ -17,19 +17,16 @@ type day struct{}
 
 func (d *day) SolvePart1(content string) (fmt.Stringer, error) {
 	stones := parse(content)
-	total := 0
-	for _, stone := range stones {
-		cur := change(stone, 0, 25)
-		dbg.Printf("\n%v", strings.Repeat("-", 10))
-		total += cur
-	}
-	dbg.Println()
+	total := stoneCount(stones, 25)
 
 	return solution.New(total), nil
 }
 
 func (d *day) SolvePart2(content string) (fmt.Stringer, error) {
-	return nil, fmt.Errorf("Not yet implemented")
+	stones := parse(content)
+	total := stoneCount(stones, 75)
+
+	return solution.New(total), nil
 }
 
 func parse(content string) []int {
@@ -46,25 +43,56 @@ func parse(content string) []int {
 	return numbers
 }
 
-func change(number int, level int, maxLevel int) int {
-	dbg.Printf("\n%v%v -> ", strings.Repeat("|", level), number)
-	if level == maxLevel {
-		dbg.Print("Done")
-		return 1
+func stoneCount(stones []int, blinks int) int {
+	cache := make(map[int][]int)
+	stoneMap := make(map[int]int)
+	for _, stone := range stones {
+		stoneMap[stone] += 1
+	}
+	dbg.Printf("Stones: %v\n", stoneMap)
+	total := change(stoneMap, blinks, cache)
+	return total
+}
+
+func change(stones map[int]int, maxLevel int, cache map[int][]int) int {
+	cache[0] = []int{1}
+
+	for range maxLevel {
+		next := make(map[int]int)
+		for stone, count := range stones {
+			if into, exists := cache[stone]; exists {
+				for _, i := range into {
+					next[i] += count
+				}
+				continue
+			}
+
+			length := len(strconv.Itoa(stone))
+			if length%2 == 0 {
+				split := int(math.Pow10(length / 2))
+				left := stone / split
+				right := stone % split
+
+				dbg.Printf("Split(%v) -> %v, %v\n", stone, left, right)
+
+				cache[stone] = []int{left, right}
+				next[left] += count
+				next[right] += count
+				continue
+			}
+
+			product := stone * 2024
+			cache[stone] = []int{product}
+			next[product] += count
+			dbg.Printf("%v * 2024 -> %v\n", stone, product)
+		}
+		stones = next
 	}
 
-	if number == 0 {
-		dbg.Print("1")
-		return change(1, level+1, maxLevel)
+	total := 0
+	for _, count := range stones {
+		total += count
 	}
 
-	length := len(strconv.Itoa(number))
-	if length%2 == 0 {
-		split := int(math.Pow10(length / 2))
-		dbg.Printf("Split(%v)", split)
-		return change(number/split, level+1, maxLevel) + change(number%split, level+1, maxLevel)
-	}
-
-	dbg.Print("* 2024")
-	return change(number*2024, level+1, maxLevel)
+	return total
 }
