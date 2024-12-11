@@ -12,6 +12,7 @@ import (
 	day09 "aoc/day_09"
 	day10 "aoc/day_10"
 	day11 "aoc/day_11"
+	dbg "aoc/debug"
 	"aoc/solution"
 	"flag"
 	"fmt"
@@ -25,6 +26,7 @@ func main() {
 		path2 string
 		part1 bool
 		part2 bool
+		debug bool
 	)
 
 	flag.Uint64Var(&d, "day", 0, "Day to solve")
@@ -32,9 +34,11 @@ func main() {
 	flag.StringVar(&path2, "f2", "", "Path to part 2")
 	flag.BoolVar(&part1, "p1", false, "Whether to run part 1")
 	flag.BoolVar(&part2, "p2", false, "Whether to run part 2")
+	flag.BoolVar(&debug, "debug", false, "Whether to output debug information")
 	flag.Parse()
 
 	var day = uint8(d)
+	dbg.SetMode(debug)
 
 	var (
 		solver solution.Solver
