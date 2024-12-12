@@ -49,7 +49,7 @@ func stoneCount(stones []int, blinks int) int {
 	for _, stone := range stones {
 		stoneMap[stone] += 1
 	}
-	dbg.Printf("Stones: %v\n", stoneMap)
+	dbg.Printf(1, "Stones: %v\n", stoneMap)
 	total := change(stoneMap, blinks, cache)
 	return total
 }
@@ -73,7 +73,7 @@ func change(stones map[int]int, maxLevel int, cache map[int][]int) int {
 				left := stone / split
 				right := stone % split
 
-				dbg.Printf("Split(%v) -> %v, %v\n", stone, left, right)
+				dbg.Printf(2, "Split(%v) -> %v, %v\n", stone, left, right)
 
 				cache[stone] = []int{left, right}
 				next[left] += count
@@ -84,7 +84,7 @@ func change(stones map[int]int, maxLevel int, cache map[int][]int) int {
 			product := stone * 2024
 			cache[stone] = []int{product}
 			next[product] += count
-			dbg.Printf("%v * 2024 -> %v\n", stone, product)
+			dbg.Printf(2, "%v * 2024 -> %v\n", stone, product)
 		}
 		stones = next
 	}
