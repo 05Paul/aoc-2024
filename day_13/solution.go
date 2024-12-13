@@ -25,7 +25,12 @@ func (d *day) SolvePart1(content string) (fmt.Stringer, error) {
 	total := 0
 	for index, machine := range machines {
 		dbg.Printf(2, "%2d: %v\n", index, machine)
-		solved, a, b := machine.solution(100)
+		solved, a, b := machine.solution()
+
+		if max(a, b) > 100 {
+			dbg.Println(3, "Too many presses")
+			continue
+		}
 
 		if solved {
 			total += a*3 + b*1
@@ -38,7 +43,23 @@ func (d *day) SolvePart1(content string) (fmt.Stringer, error) {
 }
 
 func (d *day) SolvePart2(content string) (fmt.Stringer, error) {
-	return nil, fmt.Errorf("Not yet implemented")
+	offset := 10000000000000
+	machines := parse(content)
+	total := 0
+	for index, machine := range machines {
+		dbg.Printf(2, "%2d: %v\n", index, machine)
+		machine.prize.x += offset
+		machine.prize.y += offset
+		solved, a, b := machine.solution()
+
+		if solved {
+			total += a*3 + b*1
+			dbg.Printf(3, "Solution #%02d: a=%v, b=%v\n", index, a, b)
+		} else {
+			dbg.Printf(3, "#%02d: unsolvable\n", index)
+		}
+	}
+	return solution.New(total), nil
 }
 
 func parse(content string) []clawMachine {
@@ -94,43 +115,17 @@ type clawMachine struct {
 	prize   position
 }
 
-func (c *clawMachine) solution(maxPlays int) (solvable bool, a int, b int) {
-	maxDiv := min(max(c.maxXDiv(), c.maxYDiv()), maxPlays)
-	for diff := range maxDiv + 1 {
-		b = maxDiv - diff
+func (c *clawMachine) solution() (solvable bool, a int, b int) {
+	num := c.prize.y*c.buttonA.x - c.prize.x*c.buttonA.y
+	den := c.buttonA.x*c.buttonB.y - c.buttonA.y*c.buttonB.x
 
-		remX := c.prize.x - b*c.buttonB.x
-		if remX < 0 && remX%c.buttonA.x != 0 {
-			continue
-		}
-
-		remY := c.prize.y - b*c.buttonB.y
-		if remY < 0 && remY%c.buttonA.y != 0 {
-			continue
-		}
-
-		a = remX / c.buttonA.x
-		if a > maxPlays {
-			continue
-		}
-
-		solX := a*c.buttonA.x + b*c.buttonB.x
-		solY := a*c.buttonA.y + b*c.buttonB.y
-		if solX == c.prize.x && solY == c.prize.y {
-			dbg.Printf(3, "Prize(x=%v, y=%v), Solution(x=%v, y=%v)\n", c.prize.x, c.prize.y, solX, solY)
-			return true, a, b
-		}
+	if num%den != 0 {
+		return false, -1, -1
 	}
 
-	return false, -1, -1
-}
-
-func (c *clawMachine) maxXDiv() int {
-	return c.prize.x / min(c.buttonA.x, c.buttonB.x)
-}
-
-func (c *clawMachine) maxYDiv() int {
-	return c.prize.y / min(c.buttonA.y, c.buttonB.y)
+	b = num / den
+	a = (c.prize.x - c.buttonB.x*b) / c.buttonA.x
+	return true, a, b
 }
 
 type position struct {
