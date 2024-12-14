@@ -14,6 +14,7 @@ import (
 	day11 "aoc/day_11"
 	day12 "aoc/day_12"
 	day13 "aoc/day_13"
+	day14 "aoc/day_14"
 	dbg "aoc/debug"
 	"aoc/solution"
 	"flag"
@@ -128,6 +129,8 @@ func getSolver(day uint8) solution.Solver {
 		return day12.New()
 	case 13:
 		return day13.New()
+	case 14:
+		return day14.New()
 	default:
 		return nil
 	}
