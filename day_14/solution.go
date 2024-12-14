@@ -4,6 +4,7 @@ import (
 	dbg "aoc/debug"
 	"aoc/solution"
 	"fmt"
+	"slices"
 	"strconv"
 	"strings"
 )
@@ -40,7 +41,30 @@ func (d *day) SolvePart1(content string) (fmt.Stringer, error) {
 }
 
 func (d *day) SolvePart2(content string) (fmt.Stringer, error) {
-	return nil, fmt.Errorf("Not yet implemented")
+	robots := parse(content)
+	g := grid{
+		height: 103,
+		width:  101,
+	}
+
+	steps := -1
+	for frame := range 10000 {
+		for index, robot := range robots {
+			g.simulate(&robot, 1)
+			robots[index] = robot
+		}
+
+		qrx, qry := g.quartileRange(robots)
+		if qrx < 20 && qry < 20 {
+			steps = frame + 1
+			dbg.Printf(3, "(%v): x: %v, y: %v\n", frame, qrx, qry)
+			g.print(robots)
+			break
+		}
+		//time.Sleep(time.Millisecond * 250)
+	}
+
+	return solution.New(steps), nil
 }
 
 func parse(content string) []robot {
@@ -109,6 +133,51 @@ func (g *grid) quadrant(r *robot) int {
 	}
 
 	return 0
+}
+
+func (g *grid) print(robots []robot) {
+	positionedRobots := make([][]*robot, g.height)
+	for row := range positionedRobots {
+		positionedRobots[row] = make([]*robot, g.width)
+	}
+
+	for _, r := range robots {
+		positionedRobots[r.pos.y][r.pos.x] = &r
+	}
+
+	dbg.Println(1, strings.Repeat("-", g.width+2))
+
+	for _, line := range positionedRobots {
+		dbg.Print(1, "|")
+		for _, r := range line {
+			if r == nil {
+				dbg.Print(1, " ")
+			} else {
+				dbg.Print(1, "■")
+			}
+		}
+		dbg.Println(1, "|")
+	}
+	dbg.Println(1, strings.Repeat("-", g.width+2))
+}
+
+func (g *grid) quartileRange(robots []robot) (x int, y int) {
+	quartileR := func(values []int) int {
+		length := len(values)
+		return values[length/4*3] - values[length/4]
+	}
+	xValues := make([]int, len(robots))
+	yValues := make([]int, len(robots))
+
+	for index, r := range robots {
+		xValues[index] = r.pos.x
+		yValues[index] = r.pos.y
+	}
+
+	slices.Sort(xValues)
+	slices.Sort(yValues)
+
+	return quartileR(xValues), quartileR(yValues)
 }
 
 func addWrapping(a int, b int, limit int) int {
